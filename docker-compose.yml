@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+
+  postgres-db:
+    image: postgres:11-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: healenium
+      POSTGRES_USER: healenium_user
+      POSTGRES_PASSWORD: healenium_password
+    ports:
+      - "5432:5432"
+
+  hlm-backend:
+    image: healenium/hlm-backend:3.4.4
+    container_name: hlm-backend
+    ports:
+      - "7878:7878"
+    environment:
+      SPRING_POSTGRES_DB: healenium
+      SPRING_POSTGRES_USER: healenium_user
+      SPRING_POSTGRES_PASSWORD: healenium_password
+      SPRING_POSTGRES_URL: jdbc:postgresql://postgres-db:5432/healenium
+    depends_on:
+      - postgres-db
+
+  selector-imitator:
+    image: healenium/selector-imitator:1.3
+    container_name: selector-imitator
+    ports:
+      - "8000:8000"
+
+  selenium:
+    image: seleniarm/standalone-chromium:latest
+    container_name: selenium
+    ports:
+      - "4444:4444"
+
+  hlm-proxy:
+    image: healenium/hlm-proxy:3.4.4
+    container_name: hlm-proxy
+    ports:
+      - "8085:8085"
+    environment:
+      RECOVERY_TRIES: 1
+      SCORE_CAP: 0.6
+      HLM_BACKEND_URL: http://hlm-backend:7878
+      SELENIUM_SERVER_URL: http://selenium:4444
+      SELECTOR_IMITATOR_URL: http://selector-imitator:8000
+    depends_on:
+      - hlm-backend
+      - selenium

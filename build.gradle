@@ -1,0 +1,97 @@
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'idea'
+    id 'net.serenity-bdd.serenity-gradle-plugin' version '4.2.8'
+    id 'org.sonarqube' version '5.1.0.4882'
+    id 'jacoco'
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "lcastanoj_sauceDemo"
+        property "sonar.organization", "lcastanoj"
+        property "sonar.host.url", "https://sonarcloud.io"
+        // Ruta al reporte XML de JaCoCo que generaremos
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
+    }
+}
+
+group = ''
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    gradlePluginPortal()
+}
+
+ext {
+    serenityVersion = '3.9.8'
+    cucumberVersion = '7.20.1'
+    junitVersion = '5.11.3'
+    logbackVersion = '1.5.12'
+    webdrivermanagerVersion = '5.9.2'
+}
+
+dependencies {
+    // Serenity core + Cucumber
+    implementation "net.serenity-bdd:serenity-core:${serenityVersion}"
+    implementation "net.serenity-bdd:serenity-cucumber:${serenityVersion}"
+    implementation "net.serenity-bdd:serenity-screenplay:${serenityVersion}"
+    implementation "net.serenity-bdd:serenity-screenplay-webdriver:${serenityVersion}"
+    implementation "net.serenity-bdd:serenity-ensure:${serenityVersion}"
+    implementation "com.epam.healenium:healenium-web:3.4.4"
+    implementation "com.typesafe:config:1.4.3"
+
+    // JUnit 4 (runners @RunWith)
+    testImplementation "junit:junit:4.13.2"
+
+    // Driver manager
+    implementation "io.github.bonigarcia:webdrivermanager:${webdrivermanagerVersion}"
+
+    // Logging
+    implementation "ch.qos.logback:logback-classic:${logbackVersion}"
+}
+
+serenity {
+    testRoot = "runners"
+    requirementsBaseDir = "src/test/resources/features"
+    reports = ["single-page-html"]
+}
+
+// --- JACOCO ---
+// Que Jacoco se ejecute después de los tests y genere XML
+test {
+    finalizedBy jacocoTestReport  // al acabar los tests, genera el reporte de cobertura
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Agregar reports Serenity después de test
+test.finalizedBy(aggregate)
+
+// Permitir que siga ejecutando aunque fallen escenarios
+gradle.startParameter.continueOnFailure = true
+
+healeniumVersion='3.4.4'
+typesafeConfigVersion='1.4.3'
+
+// Java 21: módulos cerrados por defecto — OBLIGATORIO
+test {
+    useJUnit()
+    jvmArgs += ['--add-opens',
+                'java.base/java.lang=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.io=ALL-UNNAMED']
+}
