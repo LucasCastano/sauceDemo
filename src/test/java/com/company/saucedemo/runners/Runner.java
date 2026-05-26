@@ -7,7 +7,8 @@ import io.cucumber.junit.CucumberOptions;
 @RunWith(CucumberWithSerenity.class)
 @CucumberOptions(
         features = "src/test/resources/features",
-        glue = "com.company.saucedemo"
+        glue = "com.company.saucedemo",
+        tags = "@login-success"
 )
 public class Runner {
 }
